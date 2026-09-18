@@ -1,0 +1,45 @@
+name: Setup Project Structure
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "portfolio-with-gemini-chatbot.zip"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract portfolio ZIP
+        run: |
+          mkdir -p extracted
+          unzip -o portfolio-with-gemini-chatbot.zip -d extracted
+
+          PACKAGE=$(find extracted -name package.json -type f | head -1)
+
+          if [ -z "$PACKAGE" ]; then
+            echo "package.json not found in ZIP"
+            exit 1
+          fi
+
+          ROOT=$(dirname "$PACKAGE")
+
+          cp -R "$ROOT"/. ./
+
+          rm -rf extracted
+          rm -f portfolio-with-gemini-chatbot.zip
+
+      - name: Commit project structure
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Set up Next.js project structure" || echo "No changes to commit"
+          git push
